@@ -29,8 +29,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         testSearchBar.delegate = self
         testSearchBar.enablesReturnKeyAutomatically = false
         testSearchBar.placeholder = "カテゴリーを検索"
+        testSearchBar.showsCancelButton = false
     }
-    
     // セルの数を返すメソッド
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return taskArray.count
@@ -86,17 +86,32 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         }
     }
     
+    internal func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        testSearchBar.showsCancelButton = true
+    }
     // searchBarが押されたときに実行されるメソッド
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         testSearchBar.endEditing(true)
-        guard let searchText = testSearchBar.text else {return}
-        let result = realm.objects(Task.self).filter("category CONTAINS '\(String(describing: searchText))'").sorted(byKeyPath: "date", ascending: true)
-        let count = result.count
-        if count == 0 {
-            taskArray = try! Realm().objects(Task.self).sorted(byKeyPath: "date", ascending: true)
-        } else {
-            taskArray = result
+        guard let searchText = testSearchBar.text else {
+            return
         }
+        if searchText == "" {
+            testSearchBar.text = ""
+            testSearchBar.showsCancelButton = false
+            taskArray = try! Realm().objects(Task.self).sorted(byKeyPath: "date", ascending: true)
+            tableView.reloadData()
+        } else {
+            let result = realm.objects(Task.self).filter("category CONTAINS '\(String(describing: searchText))'").sorted(byKeyPath: "date", ascending: true)
+            taskArray = result
+            tableView.reloadData()
+            testSearchBar.showsCancelButton = true
+        }
+    }
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        testSearchBar.text = ""
+        testSearchBar.showsCancelButton = false
+        testSearchBar.endEditing(true)
+        taskArray = try! Realm().objects(Task.self).sorted(byKeyPath: "date", ascending: true)
         tableView.reloadData()
     }
     
